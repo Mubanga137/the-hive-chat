@@ -8,6 +8,7 @@ import {
 import hiveLogo from "@/assets/hive-logo.jpeg";
 import HoneycombBackground from "@/components/HoneycombBackground";
 import { useAuth } from "@/hooks/useAuth";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
 import DashboardHomeSection from "@/components/DashboardHomeSection";
 
 // Subpages
@@ -40,6 +41,7 @@ const CustomerDashboard = () => {
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const unreadCount = useUnreadCount();
   const [activeSection, setActiveSection] = useState("Home");
 
   const greeting = useMemo(() => getGreeting(), []);
@@ -83,7 +85,13 @@ const CustomerDashboard = () => {
                 : "text-foreground hover:bg-secondary border border-transparent"
             }`}>
             <span className="text-base">{item.emoji}</span>
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {item.label === "Messages" && unreadCount > 0 && (
+              <span className="ml-auto min-w-[20px] h-5 rounded-full text-[10px] font-bold flex items-center justify-center"
+                style={{ backgroundColor: "#B37C1C", color: "#FFFBF2" }}>
+                {unreadCount}
+              </span>
+            )}
           </button>
         ))}
       </nav>
