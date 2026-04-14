@@ -58,6 +58,7 @@ const CustomerDashboard = () => {
       case "Wallet": return <CustomerWallet />;
       case "Categories": return <Categories />;
       case "Settings": return <CustomerSettings />;
+      case "Messages": { navigate("/messages"); return null; }
       default: return <DashboardHomeSection firstName={firstName} greeting={greeting} setActiveSection={setActiveSection} />;
     }
   };
