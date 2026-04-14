@@ -26,6 +26,7 @@ import KantembaLedger from "./pages/studio/KantembaLedger.tsx";
 import MarketingPromos from "./pages/studio/MarketingPromos.tsx";
 import AnalyticsCustomers from "./pages/studio/AnalyticsCustomers.tsx";
 import HiveEscrowWallet from "./pages/studio/HiveEscrowWallet.tsx";
+import Messages from "./pages/Messages.tsx";
 
 const queryClient = new QueryClient();
 
