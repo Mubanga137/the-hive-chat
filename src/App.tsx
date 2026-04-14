@@ -69,6 +69,9 @@ const App = () => (
             {/* Gig Worker — temporarily open */}
             <Route path="/gig-radar" element={<GigRadar />} />
 
+            {/* Messaging — accessible to all roles */}
+            <Route path="/messages" element={<Messages />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
