@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Video, Link2, Package, Briefcase, ShoppingCart, Coins,
-  LogOut, Menu, X, ChevronRight, Warehouse, Globe, BookOpen, Tag, BarChart3, Wallet
+  LogOut, Menu, X, ChevronRight, Warehouse, Globe, BookOpen, Tag, BarChart3, Wallet, MessageSquare
 } from "lucide-react";
 import hiveLogo from "@/assets/hive-logo.jpeg";
 import { useAuth } from "@/hooks/useAuth";
@@ -49,6 +49,12 @@ const sidebarModules = [
       { label: "Marketing & Promos", icon: Tag, path: "/retailer-studio/marketing" },
       { label: "Analytics & Customers", icon: BarChart3, path: "/retailer-studio/analytics" },
       { label: "Hive Escrow Wallet", icon: Wallet, path: "/retailer-studio/escrow" },
+    ],
+  },
+  {
+    group: "Communication",
+    items: [
+      { label: "Messages", icon: MessageSquare, path: "/messages" },
     ],
   },
 ];

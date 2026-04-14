@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingBag, FileText, MapPin, Wallet, FolderOpen, LogOut, Menu, X,
-  Settings, LayoutDashboard
+  Settings, LayoutDashboard, MessageSquare
 } from "lucide-react";
 import hiveLogo from "@/assets/hive-logo.jpeg";
 import HoneycombBackground from "@/components/HoneycombBackground";
@@ -25,6 +25,7 @@ const sidebarItems = [
   { label: "Track My Orders", icon: MapPin, emoji: "📍" },
   { label: "Wallet", icon: Wallet, emoji: "💳" },
   { label: "Categories", icon: FolderOpen, emoji: "📂" },
+  { label: "Messages", icon: MessageSquare, emoji: "💬" },
 ];
 
 const getGreeting = () => {
