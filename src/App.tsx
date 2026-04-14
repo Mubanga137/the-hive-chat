@@ -27,6 +27,7 @@ import MarketingPromos from "./pages/studio/MarketingPromos.tsx";
 import AnalyticsCustomers from "./pages/studio/AnalyticsCustomers.tsx";
 import HiveEscrowWallet from "./pages/studio/HiveEscrowWallet.tsx";
 import Messages from "./pages/Messages.tsx";
+import HiveBotWidget from "./components/messaging/HiveBotWidget";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <HiveBotWidget />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
