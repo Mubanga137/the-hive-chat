@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import hiveLogo from "@/assets/hive-logo.jpeg";
 import { useAuth } from "@/hooks/useAuth";
+import { useUnreadCount } from "@/hooks/useUnreadCount";
 import HoneycombBackground from "@/components/HoneycombBackground";
 
 interface DashboardLayoutProps {
@@ -64,6 +65,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile, signOut } = useAuth();
+  const unreadCount = useUnreadCount();
 
   const handleLogout = async () => {
     await signOut();
@@ -103,7 +105,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   }`}
                 >
                   <item.icon size={18} className={isActive(item.path) ? "text-primary" : "text-muted-foreground"} />
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {item.label === "Messages" && unreadCount > 0 && (
+                    <span className="ml-auto min-w-[20px] h-5 rounded-full text-[10px] font-bold flex items-center justify-center"
+                      style={{ backgroundColor: "#B37C1C", color: "#FFFBF2" }}>
+                      {unreadCount}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
