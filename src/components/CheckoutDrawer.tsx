@@ -172,20 +172,45 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-foreground">Quantity</span>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-secondary">
-                    <Minus size={14} />
-                  </button>
-                  <span className="text-sm font-bold w-6 text-center">{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)}
-                    className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-secondary">
-                    <Plus size={14} />
-                  </button>
+              {isService ? (
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <label className="text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1.5"><Calendar size={12} /> Booking Date</label>
+                    <input type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)}
+                      min={new Date().toISOString().split("T")[0]}
+                      className="w-full px-3 py-2.5 rounded-xl bg-secondary/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1.5"><FileText size={12} /> Notes (optional)</label>
+                    <textarea value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)}
+                      rows={2} placeholder="Anything the provider should know..."
+                      className="w-full px-3 py-2.5 rounded-xl bg-secondary/50 border border-border text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  </div>
+                  {(item.duration || item.location_type) && (
+                    <p className="text-[11px] text-muted-foreground">
+                      {item.duration && <>Duration: {item.duration} · </>}
+                      {item.location_type === "at_customer" && "At your location"}
+                      {item.location_type === "at_sme" && "At the provider's location"}
+                      {item.location_type === "remote" && "Remote / online"}
+                    </p>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-foreground">Quantity</span>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-secondary">
+                      <Minus size={14} />
+                    </button>
+                    <span className="text-sm font-bold w-6 text-center">{quantity}</span>
+                    <button onClick={() => setQuantity(quantity + 1)}
+                      className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-secondary">
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Payment method */}
               <div className="mb-4">
