@@ -130,11 +130,13 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
       if (appliedPromo && item.sme_id && user) {
         recordRedemption(item.sme_id, appliedPromo.campaign_id, user.id, subtotal, appliedPromo.discount);
       }
-      toast.success("🎉 Deal locked! Your order has been placed.");
+      toast.success(isService ? "📅 Booking confirmed!" : "🎉 Deal locked! Your order has been placed.");
       onOpenChange(false);
       setQuantity(1);
       setAppliedPromo(null);
       setPromoInput("");
+      setBookingDate("");
+      setBookingNotes("");
     }
     setSubmitting(false);
   };
@@ -276,7 +278,7 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
               <button onClick={handleConfirm} disabled={submitting || (payMethod === "wallet" && !canPayWallet)}
                 className="btn-gold w-full flex items-center justify-center gap-2 py-3.5 text-sm disabled:opacity-50">
                 <Zap size={16} />
-                {submitting ? "Processing..." : "CONFIRM & LOCK DEAL"}
+                {submitting ? "Processing..." : isService ? "CONFIRM BOOKING" : "CONFIRM & LOCK DEAL"}
               </button>
 
               <p className="text-[10px] text-muted-foreground text-center mt-3">
