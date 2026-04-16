@@ -57,20 +57,19 @@ const StorePage = () => {
     (async () => {
       setLoading(true);
       const isNumeric = /^\d+$/.test(storeKey);
-      const query = supabase.from("sme_stores").select("*");
       const { data: storeData } = isNumeric
-        ? await query.eq("id", Number(storeKey)).maybeSingle()
-        : await query.eq("store_slug" as any, storeKey).maybeSingle();
+        ? await supabase.from("sme_stores").select("*").eq("id", Number(storeKey)).maybeSingle()
+        : await (supabase.from("sme_stores").select("*") as any).eq("store_slug", storeKey).maybeSingle();
 
       if (storeData) {
-        const s = storeData as any as StoreInfo;
+        const s = storeData as unknown as StoreInfo;
         setStore(s);
         const { data: itemsData } = await supabase
           .from("hive_catalogue")
           .select("*")
           .eq("sme_id", s.id)
           .order("created_at", { ascending: false });
-        setItems((itemsData as OfferItem[]) || []);
+        setItems((itemsData as unknown as OfferItem[]) || []);
 
         // Active campaigns from local promo engine
         const camps = loadCampaigns(s.id).filter((c) => c.status === "active");
