@@ -1,9 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Zap, Minus, Plus, Wallet } from "lucide-react";
+import { X, Zap, Minus, Plus, Wallet, Tag, Check } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { validatePromo, recordRedemption } from "@/lib/promoEngine";
 
 interface CheckoutDrawerProps {
   open: boolean;
@@ -15,13 +16,33 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
   const [quantity, setQuantity] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [payMethod, setPayMethod] = useState<"wallet" | "cod">("wallet");
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number; campaign_id: string } | null>(null);
   const { user, profile } = useAuth();
 
   if (!item) return null;
 
-  const total = item.price * quantity;
+  const subtotal = item.price * quantity;
+  const total = Math.max(0, subtotal - (appliedPromo?.discount ?? 0));
   const walletBalance = profile?.zmw_balance ?? 0;
   const canPayWallet = walletBalance >= total;
+
+  const applyPromo = () => {
+    if (!user) { toast.error("Log in to use promo codes."); return; }
+    if (!item.sme_id) { toast.error("Promo not available for this item."); return; }
+    const res = validatePromo({
+      code: promoInput.trim(),
+      user_id: user.id,
+      order_total: subtotal,
+      product_ids: item.id ? [item.id] : [],
+      sme_id: item.sme_id,
+    });
+    if (!res.ok) { toast.error(res.reason || "Invalid code"); return; }
+    setAppliedPromo({ code: res.campaign!.code, discount: res.discount!, campaign_id: res.campaign!.id });
+    toast.success(`Saved ZMW ${res.discount!.toFixed(2)}!`);
+  };
+
+  const removePromo = () => { setAppliedPromo(null); setPromoInput(""); };
 
   const handleConfirm = async () => {
     if (!user) {
@@ -94,9 +115,15 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
         }
       }
 
+      // Record promo redemption
+      if (appliedPromo && item.sme_id && user) {
+        recordRedemption(item.sme_id, appliedPromo.campaign_id, user.id, subtotal, appliedPromo.discount);
+      }
       toast.success("🎉 Deal locked! Your order has been placed.");
       onOpenChange(false);
       setQuantity(1);
+      setAppliedPromo(null);
+      setPromoInput("");
     }
     setSubmitting(false);
   };
@@ -173,9 +200,41 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
                 )}
               </div>
 
-              <div className="flex justify-between items-center mb-4 pb-4 border-b border-border">
-                <span className="text-sm text-muted-foreground">Total</span>
-                <span className="text-xl font-bold text-primary">ZMW {total.toFixed(2)}</span>
+              {/* Promo code */}
+              <div className="mb-4">
+                <p className="text-sm font-medium text-foreground mb-2 flex items-center gap-1.5"><Tag size={14} /> Promo Code</p>
+                {appliedPromo ? (
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                    <span className="flex items-center gap-1.5 text-sm font-semibold text-emerald-700">
+                      <Check size={14} /> {appliedPromo.code} applied (–ZMW {appliedPromo.discount.toFixed(2)})
+                    </span>
+                    <button onClick={removePromo} className="text-xs text-emerald-700 hover:underline">Remove</button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input value={promoInput} onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                      placeholder="Enter code"
+                      className="flex-1 px-3 py-2 text-sm rounded-xl bg-secondary/50 border border-border font-mono focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                    <button onClick={applyPromo} className="px-4 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90">
+                      Apply
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-4 pb-4 border-b border-border space-y-1">
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Subtotal</span><span>ZMW {subtotal.toFixed(2)}</span>
+                </div>
+                {appliedPromo && (
+                  <div className="flex justify-between text-sm text-emerald-600">
+                    <span>Discount</span><span>– ZMW {appliedPromo.discount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pt-1">
+                  <span className="text-sm font-medium text-foreground">Total</span>
+                  <span className="text-xl font-bold text-primary">ZMW {total.toFixed(2)}</span>
+                </div>
               </div>
 
               <button onClick={handleConfirm} disabled={submitting || (payMethod === "wallet" && !canPayWallet)}
