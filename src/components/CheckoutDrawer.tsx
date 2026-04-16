@@ -52,6 +52,10 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
       toast.error("Please log in to place an order.");
       return;
     }
+    if (isService && !bookingDate) {
+      toast.error("Pick a date for your booking.");
+      return;
+    }
     setSubmitting(true);
 
     if (payMethod === "wallet") {
@@ -87,6 +91,9 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
 
     // Create order
     const systemFee = Math.round(total * 0.05 * 100) / 100;
+    const notes = isService
+      ? `Booking on ${bookingDate}${bookingNotes ? " — " + bookingNotes : ""}`
+      : null;
     const { error } = await supabase.from("orders").insert({
       buyer_id: user.id,
       item_id: item.id || null,
@@ -95,7 +102,8 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
       sme_id: item.sme_id || null,
       system_fee: systemFee,
       hive_skim_amount: systemFee,
-    });
+      ...(notes ? { notes } as any : {}),
+    } as any);
 
     if (error) {
       toast.error(error.message);
@@ -143,7 +151,7 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
             <div className="p-5">
               <div className="w-12 h-1 rounded-full bg-border mx-auto mb-4" />
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-display font-bold text-foreground">Lock This Deal</h3>
+                <h3 className="text-lg font-display font-bold text-foreground">{isService ? "Book This Service" : "Lock This Deal"}</h3>
                 <button onClick={() => onOpenChange(false)} className="p-1.5 rounded-lg hover:bg-secondary">
                   <X size={18} className="text-muted-foreground" />
                 </button>
