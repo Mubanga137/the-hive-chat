@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Zap, Minus, Plus, Wallet, Tag, Check } from "lucide-react";
+import { X, Zap, Minus, Plus, Wallet, Tag, Check, Calendar, FileText } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,11 +18,14 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
   const [payMethod, setPayMethod] = useState<"wallet" | "cod">("wallet");
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number; campaign_id: string } | null>(null);
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingNotes, setBookingNotes] = useState("");
   const { user, profile } = useAuth();
 
   if (!item) return null;
 
-  const subtotal = item.price * quantity;
+  const isService = item.item_type === "service";
+  const subtotal = (item.price || 0) * (isService ? 1 : quantity);
   const total = Math.max(0, subtotal - (appliedPromo?.discount ?? 0));
   const walletBalance = profile?.zmw_balance ?? 0;
   const canPayWallet = walletBalance >= total;
@@ -47,6 +50,10 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
   const handleConfirm = async () => {
     if (!user) {
       toast.error("Please log in to place an order.");
+      return;
+    }
+    if (isService && !bookingDate) {
+      toast.error("Pick a date for your booking.");
       return;
     }
     setSubmitting(true);
@@ -84,6 +91,9 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
 
     // Create order
     const systemFee = Math.round(total * 0.05 * 100) / 100;
+    const notes = isService
+      ? `Booking on ${bookingDate}${bookingNotes ? " — " + bookingNotes : ""}`
+      : null;
     const { error } = await supabase.from("orders").insert({
       buyer_id: user.id,
       item_id: item.id || null,
@@ -92,7 +102,8 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
       sme_id: item.sme_id || null,
       system_fee: systemFee,
       hive_skim_amount: systemFee,
-    });
+      ...(notes ? { notes } as any : {}),
+    } as any);
 
     if (error) {
       toast.error(error.message);
@@ -119,11 +130,13 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
       if (appliedPromo && item.sme_id && user) {
         recordRedemption(item.sme_id, appliedPromo.campaign_id, user.id, subtotal, appliedPromo.discount);
       }
-      toast.success("🎉 Deal locked! Your order has been placed.");
+      toast.success(isService ? "📅 Booking confirmed!" : "🎉 Deal locked! Your order has been placed.");
       onOpenChange(false);
       setQuantity(1);
       setAppliedPromo(null);
       setPromoInput("");
+      setBookingDate("");
+      setBookingNotes("");
     }
     setSubmitting(false);
   };
@@ -140,7 +153,7 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
             <div className="p-5">
               <div className="w-12 h-1 rounded-full bg-border mx-auto mb-4" />
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-display font-bold text-foreground">Lock This Deal</h3>
+                <h3 className="text-lg font-display font-bold text-foreground">{isService ? "Book This Service" : "Lock This Deal"}</h3>
                 <button onClick={() => onOpenChange(false)} className="p-1.5 rounded-lg hover:bg-secondary">
                   <X size={18} className="text-muted-foreground" />
                 </button>
@@ -161,20 +174,45 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-foreground">Quantity</span>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-secondary">
-                    <Minus size={14} />
-                  </button>
-                  <span className="text-sm font-bold w-6 text-center">{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)}
-                    className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-secondary">
-                    <Plus size={14} />
-                  </button>
+              {isService ? (
+                <div className="space-y-3 mb-4">
+                  <div>
+                    <label className="text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1.5"><Calendar size={12} /> Booking Date</label>
+                    <input type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)}
+                      min={new Date().toISOString().split("T")[0]}
+                      className="w-full px-3 py-2.5 rounded-xl bg-secondary/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-foreground mb-1.5 flex items-center gap-1.5"><FileText size={12} /> Notes (optional)</label>
+                    <textarea value={bookingNotes} onChange={(e) => setBookingNotes(e.target.value)}
+                      rows={2} placeholder="Anything the provider should know..."
+                      className="w-full px-3 py-2.5 rounded-xl bg-secondary/50 border border-border text-sm text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/40" />
+                  </div>
+                  {(item.duration || item.location_type) && (
+                    <p className="text-[11px] text-muted-foreground">
+                      {item.duration && <>Duration: {item.duration} · </>}
+                      {item.location_type === "at_customer" && "At your location"}
+                      {item.location_type === "at_sme" && "At the provider's location"}
+                      {item.location_type === "remote" && "Remote / online"}
+                    </p>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-foreground">Quantity</span>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-secondary">
+                      <Minus size={14} />
+                    </button>
+                    <span className="text-sm font-bold w-6 text-center">{quantity}</span>
+                    <button onClick={() => setQuantity(quantity + 1)}
+                      className="w-8 h-8 rounded-lg border border-border flex items-center justify-center hover:bg-secondary">
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Payment method */}
               <div className="mb-4">
@@ -240,7 +278,7 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
               <button onClick={handleConfirm} disabled={submitting || (payMethod === "wallet" && !canPayWallet)}
                 className="btn-gold w-full flex items-center justify-center gap-2 py-3.5 text-sm disabled:opacity-50">
                 <Zap size={16} />
-                {submitting ? "Processing..." : "CONFIRM & LOCK DEAL"}
+                {submitting ? "Processing..." : isService ? "CONFIRM BOOKING" : "CONFIRM & LOCK DEAL"}
               </button>
 
               <p className="text-[10px] text-muted-foreground text-center mt-3">

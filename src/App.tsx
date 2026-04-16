@@ -43,7 +43,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/store/:smeId" element={<StorePage />} />
+            <Route path="/store/:storeKey" element={<StorePage />} />
             <Route path="/category/:name" element={<CategoryPage />} />
 
             {/* Customer — temporarily open */}
