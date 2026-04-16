@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Zap, Minus, Plus, Wallet, Tag, Check } from "lucide-react";
+import { X, Zap, Minus, Plus, Wallet, Tag, Check, Calendar, FileText } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,11 +18,14 @@ const CheckoutDrawer = ({ open, onOpenChange, item }: CheckoutDrawerProps) => {
   const [payMethod, setPayMethod] = useState<"wallet" | "cod">("wallet");
   const [promoInput, setPromoInput] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number; campaign_id: string } | null>(null);
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingNotes, setBookingNotes] = useState("");
   const { user, profile } = useAuth();
 
   if (!item) return null;
 
-  const subtotal = item.price * quantity;
+  const isService = item.item_type === "service";
+  const subtotal = (item.price || 0) * (isService ? 1 : quantity);
   const total = Math.max(0, subtotal - (appliedPromo?.discount ?? 0));
   const walletBalance = profile?.zmw_balance ?? 0;
   const canPayWallet = walletBalance >= total;
